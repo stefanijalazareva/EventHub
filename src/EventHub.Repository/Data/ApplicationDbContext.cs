@@ -6,9 +6,13 @@ namespace EventHub.Repository.Data;
 
 public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 {
+    private readonly bool _isSqlServer;
+    
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
         : base(options)
     {
+        // Detect if using SQL Server
+        _isSqlServer = Database.IsSqlServer();
     }
 
     public DbSet<Event> Events { get; set; }
@@ -30,7 +34,17 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(e => e.City).IsRequired().HasMaxLength(100);
             entity.Property(e => e.Organizer).IsRequired().HasMaxLength(200);
             entity.Property(e => e.Category).HasMaxLength(100);
-            entity.Property(e => e.TicketPrice).HasColumnType("decimal(18,2)");
+            
+            // Handle decimal precision based on database type
+            if (_isSqlServer)
+            {
+                entity.Property(e => e.TicketPrice).HasColumnType("decimal(18,2)");
+            }
+            else
+            {
+                // SQLite doesn't enforce decimal precision, just use default
+                entity.Property(e => e.TicketPrice);
+            }
             
             entity.HasMany(e => e.Tickets)
                 .WithOne(t => t.Event)
