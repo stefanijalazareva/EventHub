@@ -1,6 +1,7 @@
 using EventHub.Domain.DTO;
 using EventHub.Domain.DomainModels;
 using EventHub.Service.Interface;
+using EventHub.Service.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -14,23 +15,48 @@ public class TicketsController : Controller
     private readonly IEventService _eventService;
     private readonly IAttendeeService _attendeeService;
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly IEmailService _emailService;
 
     public TicketsController(
         ITicketService ticketService,
         IEventService eventService,
         IAttendeeService attendeeService,
-        UserManager<ApplicationUser> userManager)
+        UserManager<ApplicationUser> userManager,
+        IEmailService emailService)
     {
         _ticketService = ticketService;
         _eventService = eventService;
         _attendeeService = attendeeService;
         _userManager = userManager;
+        _emailService = emailService;
     }
 
     [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(string searchUser, int? eventId)
     {
         var tickets = await _ticketService.GetAllTicketsAsync();
+        
+        // Filter by user (attendee name or email)
+        if (!string.IsNullOrEmpty(searchUser))
+        {
+            tickets = tickets.Where(t => 
+                t.AttendeeName.Contains(searchUser, StringComparison.OrdinalIgnoreCase) ||
+                t.AttendeeEmail.Contains(searchUser, StringComparison.OrdinalIgnoreCase)
+            ).ToList();
+        }
+        
+        // Filter by event
+        if (eventId.HasValue && eventId.Value > 0)
+        {
+            tickets = tickets.Where(t => t.EventId == eventId.Value).ToList();
+        }
+        
+        // Get all events for the filter dropdown
+        var events = await _eventService.GetAllEventsAsync();
+        ViewBag.Events = events;
+        ViewBag.SearchUser = searchUser;
+        ViewBag.SelectedEventId = eventId;
+        
         return View(tickets.OrderByDescending(t => t.PurchaseDate));
     }
 
@@ -111,7 +137,22 @@ public class TicketsController : Controller
             var bookDto = new BookTicketDto { EventId = eventId, AttendeeId = attendeeId, Quantity = quantity };
             var tickets = await _ticketService.BookTicketsAsync(bookDto);
             
-            TempData["SuccessMessage"] = $"Successfully booked {quantity} ticket(s)!";
+            // Get event details for email
+            var eventDetails = await _eventService.GetEventByIdAsync(eventId);
+            var ticketNumbers = string.Join("<br/>", tickets.Select(t => t.TicketNumber));
+            var totalPrice = tickets.Sum(t => t.Price);
+            
+            // Send confirmation email
+            await _emailService.SendTicketConfirmationAsync(
+                user.Email ?? "",
+                user.UserName ?? "Customer",
+                eventDetails?.Name ?? "Event",
+                quantity,
+                totalPrice,
+                ticketNumbers
+            );
+            
+            TempData["SuccessMessage"] = $"Successfully booked {quantity} ticket(s)! A confirmation email has been sent to {user.Email}";
             
             if (User.IsInRole("Admin"))
             {

@@ -1,5 +1,6 @@
 using EventHub.Service.Interface;
 using EventHub.Service.Implementation;
+using EventHub.Service.Interfaces;
 using EventHub.Domain.Interfaces;
 using EventHub.Domain.DomainModels;
 using EventHub.Repository.Data;
@@ -17,8 +18,22 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 // Database Configuration
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+var useSqlServer = builder.Configuration.GetValue<bool>("UseSqlServer");
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+{
+    if (useSqlServer)
+    {
+        // Use SQL Server for Azure/Production
+        options.UseSqlServer(connectionString);
+    }
+    else
+    {
+        // Use SQLite for local development
+        options.UseSqlite(connectionString);
+    }
+});
 
 // Identity Configuration
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
@@ -61,6 +76,7 @@ builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddScoped<IAttendeeService, AttendeeService>();
 builder.Services.AddScoped<ITicketService, TicketService>();
 builder.Services.AddScoped<IScheduleService, ScheduleService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<DatabaseSeeder>();
 
 // External Services Registration

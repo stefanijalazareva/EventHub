@@ -6,6 +6,54 @@
 
 <h1><i class="bi bi-ticket-perforated"></i> All Tickets</h1>
 
+<!-- Search and Filter Form -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" asp-action="Index">
+            <div class="row g-3">
+                <div class="col-md-5">
+                    <label for="searchUser" class="form-label">
+                        <i class="bi bi-search"></i> Search by User
+                    </label>
+                    <input type="text" 
+                           class="form-control" 
+                           id="searchUser" 
+                           name="searchUser" 
+                           value="@ViewBag.SearchUser" 
+                           placeholder="Enter name or email...">
+                </div>
+                <div class="col-md-5">
+                    <label for="eventId" class="form-label">
+                        <i class="bi bi-calendar-event"></i> Filter by Event
+                    </label>
+                    <select class="form-select" id="eventId" name="eventId">
+                        <option value="">All Events</option>
+                        @foreach (var evt in ViewBag.Events)
+                        {
+                            <option value="@evt.Id" selected="@(ViewBag.SelectedEventId == evt.Id)">
+                                @evt.Name
+                            </option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-funnel"></i> Apply
+                    </button>
+                </div>
+            </div>
+            @if (!string.IsNullOrEmpty(ViewBag.SearchUser as string) || (ViewBag.SelectedEventId != null && ViewBag.SelectedEventId > 0))
+            {
+                <div class="mt-2">
+                    <a href="@Url.Action("Index")" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-x-circle"></i> Clear Filters
+                    </a>
+                </div>
+            }
+        </form>
+    </div>
+</div>
+
 @if (TempData["SuccessMessage"] != null)
 {
     <div class="alert alert-success alert-dismissible fade show">
