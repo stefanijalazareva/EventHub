@@ -1,0 +1,120 @@
+@{
+    ViewData["Title"] = "Book Tickets";
+    var eventDto = ViewBag.Event as EventHub.Domain.DTO.EventDto;
+}
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-controller="Events" asp-action="Index">Events</a></li>
+        <li class="breadcrumb-item"><a asp-controller="Events" asp-action="Details" asp-route-id="@eventDto.Id">@eventDto.Name</a></li>
+        <li class="breadcrumb-item active">Book Tickets</li>
+    </ol>
+</nav>
+
+<h1><i class="bi bi-cart-plus"></i> Book Tickets</h1>
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show">
+        <i class="bi bi-exclamation-triangle"></i> @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Event Information</h5>
+            </div>
+            <div class="card-body">
+                <h3>@eventDto.Name</h3>
+                <p class="text-muted">
+                    <i class="bi bi-geo-alt"></i> @eventDto.Location, @eventDto.City<br>
+                    <i class="bi bi-calendar"></i> @eventDto.StartDate.ToString("MMMM dd, yyyy - HH:mm")<br>
+                    <i class="bi bi-person"></i> @eventDto.Organizer
+                </p>
+                <div class="alert alert-info">
+                    <div class="row text-center">
+                        <div class="col-md-4">
+                            <h4 class="text-success">@eventDto.TicketPrice.ToString("C")</h4>
+                            <small>Price per ticket</small>
+                        </div>
+                        <div class="col-md-4">
+                            <h4 class="text-primary">@eventDto.AvailableTickets</h4>
+                            <small>Tickets available</small>
+                        </div>
+                        <div class="col-md-4">
+                            <h4 class="text-secondary">@eventDto.TotalTickets</h4>
+                            <small>Total capacity</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="bi bi-ticket-perforated"></i> Booking Details</h5>
+            </div>
+            <div class="card-body">
+                <form asp-action="Book" method="post">
+                    <input type="hidden" name="eventId" value="@eventDto.Id" />
+                    
+                    <div class="alert alert-info mb-3">
+                        <i class="bi bi-info-circle"></i> Booking tickets for: <strong>@User.Identity!.Name</strong>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Number of Tickets</label>
+                        <input type="number" name="quantity" class="form-control" min="1" max="@eventDto.AvailableTickets" value="1" required />
+                        <small class="text-muted">Maximum @eventDto.AvailableTickets tickets available</small>
+                    </div>
+
+                    <div class="alert alert-warning">
+                        <i class="bi bi-info-circle"></i> <strong>Total:</strong> 
+                        <span id="total">@eventDto.TicketPrice.ToString("C")</span>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="bi bi-check-circle"></i> Confirm Booking
+                        </button>
+                        <a asp-controller="Events" asp-action="Details" asp-route-id="@eventDto.Id" class="btn btn-secondary btn-lg">
+                            <i class="bi bi-x-circle"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card bg-light">
+            <div class="card-body">
+                <h5 class="card-title">Booking Instructions</h5>
+                <ol>
+                    <li>Select the attendee who will attend the event</li>
+                    <li>Choose the number of tickets you want to book</li>
+                    <li>Review the total amount</li>
+                    <li>Click "Confirm Booking" to complete</li>
+                </ol>
+                <hr>
+                <p class="mb-0"><small class="text-muted">
+                    <i class="bi bi-shield-check"></i> Your tickets will be confirmed immediately and sent to the registered email.
+                </small></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.querySelector('input[name="quantity"]').addEventListener('input', function() {
+            const price = @eventDto.TicketPrice;
+            const quantity = parseInt(this.value) || 1;
+            const total = price * quantity;
+            document.getElementById('total').textContent = total.toLocaleString('en-US', {style: 'currency', currency: 'USD'});
+        });
+    </script>
+}

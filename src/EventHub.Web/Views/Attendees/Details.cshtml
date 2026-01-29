@@ -1,0 +1,167 @@
+@model EventHub.Domain.DTO.AttendeeDto
+
+@{
+    ViewData["Title"] = $"{Model.FirstName} {Model.LastName}";
+    var tickets = ViewBag.Tickets as IEnumerable<EventHub.Domain.DTO.TicketDto>;
+}
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-action="Index">Attendees</a></li>
+        <li class="breadcrumb-item active">@Model.FirstName @Model.LastName</li>
+    </ol>
+</nav>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h3 class="mb-0">
+                    <i class="bi bi-person-circle"></i> @Model.FirstName @Model.LastName
+                </h3>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <p class="mb-2">
+                            <i class="bi bi-envelope text-primary"></i>
+                            <strong>Email:</strong> @Model.Email
+                        </p>
+                        <p class="mb-2">
+                            <i class="bi bi-telephone text-primary"></i>
+                            <strong>Phone:</strong> @Model.PhoneNumber
+                        </p>
+                        <p class="mb-2">
+                            <i class="bi bi-calendar text-primary"></i>
+                            <strong>Date of Birth:</strong> @Model.DateOfBirth.ToString("MMM dd, yyyy")
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <p class="mb-2">
+                            <i class="bi bi-geo-alt text-primary"></i>
+                            <strong>Address:</strong> @Model.Address
+                        </p>
+                        <p class="mb-2">
+                            <i class="bi bi-clock-history text-primary"></i>
+                            <strong>Registered:</strong> @Model.RegisteredAt.ToString("MMM dd, yyyy HH:mm")
+                        </p>
+                        <p class="mb-2">
+                            <i class="bi bi-cake text-primary"></i>
+                            <strong>Age:</strong> @((DateTime.Now.Year - Model.DateOfBirth.Year)) years
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-white">
+                <div class="btn-group w-100">
+                    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary">
+                        <i class="bi bi-pencil"></i> Edit
+                    </a>
+                    <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                        <i class="bi bi-trash"></i> Delete
+                    </button>
+                    <a asp-action="Index" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Back to List
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        @if (tickets != null && tickets.Any())
+        {
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-ticket-perforated"></i> Booked Tickets (@tickets.Count())
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        @foreach (var ticket in tickets)
+                        {
+                            <div class="col-md-6 mb-3">
+                                <div class="card h-100">
+                                    <div class="card-header @(ticket.Status == EventHub.Domain.DomainModels.TicketStatus.Active ? "bg-success" : "bg-danger") text-white">
+                                        <h6 class="mb-0">
+                                            <i class="bi bi-ticket-detailed"></i> @ticket.TicketNumber
+                                            <span class="badge bg-white text-dark float-end">@ticket.Status</span>
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <h6 class="card-title">@ticket.EventName</h6>
+                                        <p class="card-text mb-2">
+                                            <i class="bi bi-calendar"></i> @ticket.PurchaseDate.ToString("MMM dd, yyyy")<br>
+                                            <i class="bi bi-cash"></i> <strong>@ticket.Price.ToString("C")</strong>
+                                        </p>
+                                        @if (!string.IsNullOrEmpty(ticket.SeatNumber))
+                                        {
+                                            <p class="mb-0"><i class="bi bi-geo-alt"></i> Seat: <strong>@ticket.SeatNumber</strong></p>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle"></i> This attendee has no booked tickets yet.
+            </div>
+        }
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card bg-light">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-info-circle"></i> Attendee Statistics
+                </h5>
+                <hr>
+                <div class="row text-center">
+                    <div class="col-12 mb-3">
+                        <h3 class="text-primary">@(tickets?.Count() ?? 0)</h3>
+                        <small class="text-muted">Total Tickets</small>
+                    </div>
+                    <div class="col-12 mb-3">
+                        <h3 class="text-success">@(tickets?.Where(t => t.Status == EventHub.Domain.DomainModels.TicketStatus.Active).Count() ?? 0)</h3>
+                        <small class="text-muted">Active Tickets</small>
+                    </div>
+                    <div class="col-12">
+                        <h3 class="text-info">@(tickets?.Sum(t => t.Price).ToString("C") ?? "$0.00")</h3>
+                        <small class="text-muted">Total Spent</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Confirm Delete</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete <strong>@Model.FirstName @Model.LastName</strong>?</p>
+                <p class="text-danger">
+                    <i class="bi bi-exclamation-triangle"></i> This will also delete all associated tickets!
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash"></i> Delete
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,177 @@
+@model EventHub.Domain.DTO.EventDto
+
+@{
+    ViewData["Title"] = Model.Name;
+    var weather = ViewBag.Weather as EventHub.Domain.DTO.WeatherDto;
+}
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-action="Index">Events</a></li>
+        <li class="breadcrumb-item active">@Model.Name</li>
+    </ol>
+</nav>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <img src="@(string.IsNullOrEmpty(Model.ImageUrl) ? "https://via.placeholder.com/800x400?text=" + Uri.EscapeDataString(Model.Name) : Model.ImageUrl)" 
+                 class="card-img-top" alt="@Model.Name" style="max-height: 400px; object-fit: cover;">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <h1 class="card-title">@Model.Name</h1>
+                    <span class="badge bg-primary fs-6">@Model.Category</span>
+                </div>
+                
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <p class="mb-2">
+                            <i class="bi bi-geo-alt text-primary"></i>
+                            <strong>Location:</strong> @Model.Location, @Model.City
+                        </p>
+                        <p class="mb-2">
+                            <i class="bi bi-person text-primary"></i>
+                            <strong>Organizer:</strong> @Model.Organizer
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <p class="mb-2">
+                            <i class="bi bi-calendar-event text-primary"></i>
+                            <strong>Start:</strong> @Model.StartDate.ToString("MMM dd, yyyy HH:mm")
+                        </p>
+                        <p class="mb-2">
+                            <i class="bi bi-calendar-check text-primary"></i>
+                            <strong>End:</strong> @Model.EndDate.ToString("MMM dd, yyyy HH:mm")
+                        </p>
+                    </div>
+                </div>
+
+                <h5>Description</h5>
+                <p class="text-muted">@Model.Description</p>
+
+                <hr>
+
+                <div class="row text-center">
+                    <div class="col-md-4">
+                        <h3 class="text-success">@Model.TicketPrice.ToString("C")</h3>
+                        <small class="text-muted">Ticket Price</small>
+                    </div>
+                    <div class="col-md-4">
+                        <h3 class="text-info">@Model.AvailableTickets</h3>
+                        <small class="text-muted">Available Tickets</small>
+                    </div>
+                    <div class="col-md-4">
+                        <h3 class="text-primary">@Model.TotalTickets</h3>
+                        <small class="text-muted">Total Capacity</small>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-white">
+                @if (User.IsInRole("Admin"))
+                {
+                    <div class="btn-group w-100">
+                        <a asp-controller="Tickets" asp-action="Book" asp-route-eventId="@Model.Id" class="btn btn-success btn-lg">
+                            <i class="bi bi-cart-plus"></i> Book Tickets
+                        </a>
+                        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-secondary btn-lg">
+                            <i class="bi bi-pencil"></i> Edit
+                        </a>
+                        <button type="button" class="btn btn-outline-danger btn-lg" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                            <i class="bi bi-trash"></i> Delete
+                        </button>
+                    </div>
+                }
+                else if (User.Identity!.IsAuthenticated)
+                {
+                    <a asp-controller="Tickets" asp-action="Book" asp-route-eventId="@Model.Id" class="btn btn-success btn-lg w-100">
+                        <i class="bi bi-cart-plus"></i> Book Tickets
+                    </a>
+                }
+                else
+                {
+                    <a asp-controller="Account" asp-action="Login" asp-route-returnUrl="@($"/Events/Details/{Model.Id}")" class="btn btn-primary btn-lg w-100">
+                        <i class="bi bi-box-arrow-in-right"></i> Login to Book Tickets
+                    </a>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        @if (weather != null)
+        {
+            <div class="card weather-card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="bi bi-cloud-sun"></i> Weather Forecast
+                    </h5>
+                    <hr class="bg-white">
+                    <p class="mb-2"><strong>@weather.WeatherCondition</strong></p>
+                    <h2 class="display-4">@weather.Temperature°C</h2>
+                    <p class="mb-3">Feels like @weather.FeelsLike°C</p>
+                    
+                    <div class="row text-center mb-3">
+                        <div class="col-6">
+                            <i class="bi bi-droplet fs-4"></i>
+                            <p class="mb-0"><small>Humidity</small></p>
+                            <strong>@weather.Humidity%</strong>
+                        </div>
+                        <div class="col-6">
+                            <i class="bi bi-wind fs-4"></i>
+                            <p class="mb-0"><small>Wind</small></p>
+                            <strong>@weather.WindSpeed km/h</strong>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-light mb-0">
+                        <small><i class="bi bi-info-circle"></i> @weather.Recommendation</small>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Event Information</h5>
+                <hr>
+                <p><small class="text-muted">Created: @Model.CreatedAt.ToString("MMM dd, yyyy")</small></p>
+                @if (Model.UpdatedAt.HasValue)
+                {
+                    <p><small class="text-muted">Last Updated: @Model.UpdatedAt.Value.ToString("MMM dd, yyyy")</small></p>
+                }
+                
+                <div class="progress mt-3" style="height: 25px;">
+                    @{
+                        var soldPercentage = Model.TotalTickets > 0 ? ((Model.TotalTickets - Model.AvailableTickets) * 100.0 / Model.TotalTickets) : 0;
+                    }
+                    <div class="progress-bar bg-success" style="width: @soldPercentage%">
+                        @((int)soldPercentage)% Sold
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Confirm Deletion</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the event "<strong>@Model.Name</strong>"?</p>
+                <p class="text-danger"><i class="bi bi-exclamation-triangle"></i> This action cannot be undone!</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-danger">Delete Event</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

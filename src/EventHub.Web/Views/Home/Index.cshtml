@@ -1,0 +1,99 @@
+@model IEnumerable<EventHub.Domain.DTO.EventDto>
+
+@{
+    ViewData["Title"] = "Home";
+}
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="jumbotron bg-primary text-white p-5 rounded">
+            <h1 class="display-3 fw-bold">Find. Book. Experience Events.</h1>
+            <a class="btn btn-light btn-lg mt-3" asp-controller="Events" asp-action="Index">
+                <i class="bi bi-search"></i> Explore Events
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <h6 class="text-muted">Total Events</h6>
+                <h2 class="text-primary">@ViewBag.TotalEvents</h2>
+                <i class="bi bi-calendar-event fs-1 text-primary opacity-25 float-end"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <h6 class="text-muted">Upcoming Events</h6>
+                <h2 class="text-success">@ViewBag.UpcomingEvents</h2>
+                <i class="bi bi-calendar-check fs-1 text-success opacity-25 float-end"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <h6 class="text-muted">Registered Users</h6>
+                <h2 class="text-info">@ViewBag.TotalAttendees</h2>
+                <i class="bi bi-people fs-1 text-info opacity-25 float-end"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <h6 class="text-muted">Tickets Sold</h6>
+                <h2 class="text-warning">@ViewBag.TotalTickets</h2>
+                <i class="bi bi-ticket-perforated fs-1 text-warning opacity-25 float-end"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<h2 class="mb-4">Featured Events</h2>
+<div class="row">
+    @foreach (var item in Model)
+    {
+        <div class="col-md-4 mb-4">
+            <div class="card event-card h-100">
+                <img src="@(string.IsNullOrEmpty(item.ImageUrl) ? "https://via.placeholder.com/400x200?text=" + Uri.EscapeDataString(item.Name) : item.ImageUrl)" 
+                     class="card-img-top event-image" alt="@item.Name">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h5 class="card-title">@item.Name</h5>
+                        <span class="badge bg-primary badge-category">@item.Category</span>
+                    </div>
+                    <p class="card-text text-muted">
+                        <small>
+                            <i class="bi bi-geo-alt"></i> @item.City, @item.Location<br>
+                            <i class="bi bi-calendar"></i> @item.StartDate.ToString("MMMM dd, yyyy")<br>
+                            <i class="bi bi-clock"></i> @item.StartDate.ToString("HH:mm")
+                        </small>
+                    </p>
+                    <p class="card-text">@(item.Description.Length > 100 ? item.Description.Substring(0, 100) + "..." : item.Description)</p>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-success fw-bold">@item.TicketPrice.ToString("C")</span>
+                        <span class="badge bg-secondary">@item.AvailableTickets tickets left</span>
+                    </div>
+                </div>
+                <div class="card-footer bg-white border-top-0">
+                    <a asp-controller="Events" asp-action="Details" asp-route-id="@item.Id" class="btn btn-primary w-100">
+                        <i class="bi bi-eye"></i> View Details
+                    </a>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info text-center">
+        <i class="bi bi-info-circle fs-4"></i>
+        <p class="mb-0 mt-2">No events available at the moment. Check back soon!</p>
+    </div>
+}
