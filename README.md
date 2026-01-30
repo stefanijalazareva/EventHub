@@ -2,6 +2,14 @@
 
 EventHub is a comprehensive web application for event management built with ASP.NET Core using Onion Architecture. It provides full CRUD operations for events, attendees, tickets, and schedules, along with external API integration for discovering events in various cities.
 
+## Live Demo
+
+**Hosted on Microsoft Azure**: [https://eventhub-stefanija-ese0b4aeathaa8a6.switzerlandnorth-01.azurewebsites.net/](https://eventhub-stefanija-ese0b4aeathaa8a6.switzerlandnorth-01.azurewebsites.net/)
+
+**Demo Credentials:**
+- **Admin**: `admin@eventhub.com` / `Admin123`
+- **Register** as a new user to test the booking system
+
 ## Architecture
 
 This project follows the **Onion Architecture** pattern with the following layers:
@@ -273,7 +281,4 @@ GET /api/externalevents/city/Austin
 ## License
 
 This project is for educational purposes.
-
-## Authors
-
 Created for Integrated Systems course at FINKI.
